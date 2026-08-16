@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Write(posts/**)",
+      "Edit(posts/**)",
+      "Bash(npm run render:*)",
+      "Bash(npm run video:*)",
+      "Bash(npm install)",
+      "Bash(ls:*)",
+      "Bash(open:*)"
+    ]
+  }
+}
