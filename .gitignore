@@ -1,0 +1,7 @@
+node_modules
+
+# raw material and rendered posts stay out of git: the input is private
+# until a post goes out, and the output is reproducible from the spec
+input/*
+!input/README.md
+out
