@@ -36,14 +36,14 @@ export const DEFAULT_SIZE = '4:5';
 export const SUPERSAMPLE = 2;
 
 /** Copy sizes, as a share of canvas width — measured off the reference slides. */
-export const TEXT_SIZES = { s: 0.026, m: 0.030, l: 0.036 };
+export const TEXT_SIZES = { s: 0.021, m: 0.0245, l: 0.029 };
 
 /**
- * Leading. Tight, so a few lines read as one block rather than as a list —
- * shared with the renderer, which counts lines to know how much room the copy
- * will take before it looks for somewhere to put it.
+ * Leading. Tight enough that a few lines read as a single block rather than a
+ * list — shared with the renderer, which counts lines to know how much room the
+ * copy needs before it goes looking for somewhere to put it.
  */
-export const LINE_HEIGHT = 1.26;
+export const LINE_HEIGHT = 1.18;
 
 export function esc(s) {
   return String(s ?? '')
