@@ -36,7 +36,7 @@ export const DEFAULT_SIZE = '4:5';
 export const SUPERSAMPLE = 2;
 
 /** Copy sizes, as a share of canvas width — measured off the reference slides. */
-export const TEXT_SIZES = { s: 0.023, m: 0.027, l: 0.032 };
+export const TEXT_SIZES = { s: 0.021, m: 0.0245, l: 0.029 };
 
 /**
  * Leading. Tight enough that a few lines read as a single block rather than a
