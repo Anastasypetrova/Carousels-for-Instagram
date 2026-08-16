@@ -65,22 +65,70 @@ function textHeight(slide, boxW, size) {
 
 export const PHOTO_RE = /\.(jpe?g|png|webp|avif|heic|heif)$/i;
 
+const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
 /**
- * Index whatever is sitting in `input/`.
+ * Index everything under `input/`, subfolders included.
  *
- * A spec names a photo the way the file is named — case, spaces and punctuation
- * are ignored, so `IMG_4821.HEIC` answers to `img4821`, and a phone's own
- * filenames can be used without renaming anything.
+ * Material for several posts can sit side by side — one folder per post —
+ * so a shoot can be dropped in whole and worked through later:
+ *
+ *   input/kapstadt/IMG_4821.HEIC
+ *   input/studio/IMG_5003.jpg
+ *
+ * A spec names a photo the way the file is named; case, spaces and punctuation
+ * are ignored, so a phone's own filenames work untouched. Set `source` on the
+ * spec to the post's folder and bare names resolve inside it, which keeps
+ * `IMG_0001` in one shoot from colliding with `IMG_0001` in another.
  */
 async function photoIndex() {
-  const dir = path.join(ROOT, 'input');
-  const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const byName = new Map();
-  for (const file of await fs.readdir(dir).catch(() => [])) {
-    if (!PHOTO_RE.test(file)) continue;
-    byName.set(norm(file.replace(/\.[^.]+$/, '')), path.join(dir, file));
+  const root = path.join(ROOT, 'input');
+
+  const byPath = new Map();          // "kapstadt/img4821" -> file
+  const byBase = new Map();          // "img4821" -> [file, …]
+
+  async function walk(dir) {
+    for (const e of await fs.readdir(dir, { withFileTypes: true }).catch(() => [])) {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) { await walk(full); continue; }
+      if (!PHOTO_RE.test(e.name)) continue;
+
+      const rel = path.relative(root, full).split(path.sep);
+      const base = norm(rel.pop().replace(/\.[^.]+$/, ''));
+      byPath.set([...rel.map(norm), base].join('/'), full);
+      byBase.set(base, [...(byBase.get(base) ?? []), full]);
+    }
   }
-  return byName;
+  await walk(root);
+
+  return {
+    get size() { return byPath.size; },
+    /** Every name a spec could use, for the "no such photo" message. */
+    names: () => [...byPath.keys()],
+    /**
+     * Resolve a spec's `photo`. Tries the post's own folder first, then the
+     * name as a path, then the bare filename anywhere — and refuses to guess
+     * when a bare name matches more than one shoot.
+     */
+    resolve(name, source) {
+      const key = norm(name);
+      if (source) {
+        const scoped = byPath.get(`${norm(source)}/${key}`);
+        if (scoped) return scoped;
+      }
+      const asPath = byPath.get(name.split('/').map(norm).join('/'));
+      if (asPath) return asPath;
+
+      const hits = byBase.get(key) ?? [];
+      if (hits.length === 1) return hits[0];
+      if (hits.length > 1) {
+        throw new Error(`«${name}» есть в нескольких папках:\n    ` +
+          hits.map((f) => path.relative(root, f)).join('\n    ') +
+          '\n  Укажите папку в "source" или пишите путь: "папка/имя".');
+      }
+      return null;
+    },
+  };
 }
 
 /**
@@ -275,11 +323,11 @@ async function main() {
     // Slide one is the title — it carries the whole post in the feed, so it is
     // set larger than the slides that follow unless the spec says otherwise.
     if (i === 0 && !s.size) s.size = 'l';
-    const src = photos.get(s.photo.toLowerCase().replace(/[^a-z0-9]/g, '')) ??
+    const src = photos.resolve(s.photo, cfg.source) ??
       (await fs.access(path.resolve(ROOT, s.photo)).then(() => path.resolve(ROOT, s.photo), () => null));
     if (!src) {
-      throw new Error(`slide ${i + 1}: no photo "${s.photo}" — положите файл в input/ или укажите путь. ` +
-        `Есть в input/: ${[...photos.keys()].join(', ')}`);
+      throw new Error(`слайд ${i + 1}: нет фотографии «${s.photo}» — положите файл в input/ или укажите путь.\n` +
+        `  Есть в input/: ${photos.names().join(', ') || '(пусто)'}`);
     }
 
     const dest = path.join(workDir, `${String(i + 1).padStart(2, '0')}.png`);
