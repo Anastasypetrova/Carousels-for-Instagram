@@ -23,12 +23,15 @@ import sharp from 'sharp';
 import http from 'node:http';
 import fs from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SIZES, DEFAULT_SIZE, TEXT_SIZES, LINE_HEIGHT, SUPERSAMPLE, baseCss, rich, esc } from './theme.mjs';
 import { findTextBox, measureBox, roundBox } from './analyze.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
+const run = promisify(execFile);
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
@@ -147,6 +150,38 @@ const GRADES = {
 };
 
 /**
+ * Make sure sharp can actually open the file, and rescue it if not.
+ *
+ * iPhones shoot HEIC. sharp's bundled libvips normally decodes it, but that
+ * depends on how the binary for a given platform was built, so it cannot be
+ * assumed. When the decoder is missing, macOS can do the conversion itself:
+ * `sips` is part of the system and reads HEIC natively. Converting to PNG
+ * rather than JPEG keeps the rescue path lossless.
+ */
+async function ensureReadable(src, workDir) {
+  try {
+    await sharp(src).metadata();
+    return src;
+  } catch (err) {
+    if (process.platform !== 'darwin') throw decodeError(src, err);
+    const out = path.join(workDir, `${path.basename(src).replace(/\.[^.]+$/, '')}-converted.png`);
+    try {
+      await run('sips', ['-s', 'format', 'png', src, '--out', out]);
+      return out;
+    } catch {
+      throw decodeError(src, err);
+    }
+  }
+}
+
+function decodeError(src, err) {
+  return new Error(
+    `не удалось открыть ${path.basename(src)}: ${err.message}\n` +
+    '  Если это HEIC с айфона, снимайте в JPEG — Настройки → Камера → Форматы →\n' +
+    '  «Наиболее совместимый», либо экспортируйте кадры в JPEG перед загрузкой.');
+}
+
+/**
  * Crop a photo to the canvas and grade it. Everything downstream — the
  * analysis and the render — works on this file, so the box the analyser picks
  * is the box the viewer sees.
@@ -156,7 +191,8 @@ const GRADES = {
  * costs real detail twice over: once to the browser's own scaling, once to
  * JPEG artefacts that the second encode then bakes in.
  */
-async function prepPhoto(src, dest, { w, h }, { focus = 'centre', grade = 'base' }) {
+async function prepPhoto(src, dest, { w, h }, { focus = 'centre', grade = 'base', workDir }) {
+  src = await ensureReadable(src, workDir ?? path.dirname(dest));
   const position = focus === 'auto' ? sharp.strategy.attention : focus;
   const rw = w * SUPERSAMPLE, rh = h * SUPERSAMPLE;
   let img = sharp(src).rotate().resize(rw, rh, { fit: 'cover', position, kernel: 'lanczos3' });
@@ -331,7 +367,7 @@ async function main() {
     }
 
     const dest = path.join(workDir, `${String(i + 1).padStart(2, '0')}.png`);
-    await prepPhoto(src, dest, size, { focus: s.focus, grade: s.grade ?? cfg.grade });
+    await prepPhoto(src, dest, size, { focus: s.focus, grade: s.grade ?? cfg.grade, workDir });
     s._url = `/${path.relative(ROOT, dest).split(path.sep).join('/')}`;
 
     if (s.text) {
