@@ -5,3 +5,6 @@ node_modules
 input/*
 !input/README.md
 out
+
+# macOS junk
+.DS_Store
