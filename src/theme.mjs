@@ -98,47 +98,53 @@ body{display:flex;flex-direction:column;align-items:center;gap:40px;padding:40px
 .bg img{width:100%;height:100%;object-fit:cover;display:block}
 
 /*
- * Two-part vignette. The first layer is a soft pool under the copy, placed at
- * the text box so it darkens only what the text needs; the second is a gentle
- * edge falloff that frames the photo. Both stay low-contrast on purpose —
- * a visible grey panel would read as a sticker, not as light.
+ * The vignette darkens the perimeter and nothing else.
+ *
+ * An inset shadow, not a radial gradient. A gradient wide enough to reach the
+ * middle of the long sides has to be so large that its falloff climbs a fifth
+ * of the way up the frame, and that band of haze across the top is exactly the
+ * flat look this is supposed to avoid. The inset shadow stays on the edge by
+ * construction: blur sets how deep the band goes, and the middle of the frame
+ * is never touched. The corner gradient on top only rounds the corners off.
  */
 .vig{
   position:absolute;inset:0;z-index:2;pointer-events:none;
-  /* Edge falloff, on every frame whether or not it carries copy — it is part
-     of the house look, not a device for holding type. */
+  box-shadow:inset 0 0 ${Math.round(w * 0.11)}px ${Math.round(w * 0.022)}px rgba(8,10,14,.34);
   background:
-    radial-gradient(128% 96% at 50% 42%,
-      rgba(8,10,14,0) 44%,
-      rgba(8,10,14,.28) 74%,
-      rgba(8,10,14,.54) 100%);
+    radial-gradient(74% 58% at 50% 50%,
+      rgba(8,10,14,0) 66%,
+      rgba(8,10,14,.10) 86%,
+      rgba(8,10,14,.24) 100%);
 }
-/* The pool under the copy sits on top of the falloff, sized to what the ground
-   needs (--vs) and present only where there is copy (--vp).
-   It is meant to be all but invisible — you should not be able to point at
-   where it starts. The type's own shadow does the rest of the work. */
+/*
+ * A footing under the copy, and only under it: a small pool the width of the
+ * text block, sized to what the ground needs (--vs) and present only where
+ * there is copy (--vp). It used to be 105%×62% of the frame, which is not a
+ * footing but a wash over half the photo — the copy needs the tone right
+ * behind the letters, nothing beyond that.
+ */
 .vig.pool{
   background:
-    radial-gradient(105% 62% at var(--vx) var(--vy),
-      rgba(8,10,14,calc(.16*var(--vs)*var(--vp))) 0%,
-      rgba(8,10,14,calc(.10*var(--vs)*var(--vp))) 34%,
-      rgba(8,10,14,calc(.03*var(--vs)*var(--vp))) 60%,
-      rgba(8,10,14,0) 78%),
-    radial-gradient(128% 96% at 50% 42%,
-      rgba(8,10,14,0) 44%,
-      rgba(8,10,14,.28) 74%,
-      rgba(8,10,14,.54) 100%);
+    radial-gradient(42% 22% at var(--vx) var(--vy),
+      rgba(8,10,14,calc(.20*var(--vs)*var(--vp))) 0%,
+      rgba(8,10,14,calc(.12*var(--vs)*var(--vp))) 46%,
+      rgba(8,10,14,0) 82%),
+    radial-gradient(74% 58% at 50% 50%,
+      rgba(8,10,14,0) 66%,
+      rgba(8,10,14,.10) 86%,
+      rgba(8,10,14,.24) 100%);
 }
-/* Light ground takes the same shape in reverse, so dark type keeps its footing. */
+/*
+ * Light ground gets no pool at all. Lightening under black type is what turned
+ * the frame milky, and it works against itself: the type is #000, so it has all
+ * the contrast it needs from a light ground already. Placement holds it.
+ */
 .vig.pool.inverted{
   background:
-    radial-gradient(105% 62% at var(--vx) var(--vy),
-      rgba(255,255,255,calc(.22*var(--vs)*var(--vp))) 0%,
-      rgba(255,255,255,calc(.13*var(--vs)*var(--vp))) 36%,
-      rgba(255,255,255,0) 76%),
-    radial-gradient(128% 96% at 50% 42%,
-      rgba(8,10,14,0) 48%,
-      rgba(8,10,14,.38) 100%);
+    radial-gradient(74% 58% at 50% 50%,
+      rgba(8,10,14,0) 66%,
+      rgba(8,10,14,.10) 86%,
+      rgba(8,10,14,.24) 100%);
 }
 
 /* the copy */
@@ -156,7 +162,9 @@ body{display:flex;flex-direction:column;align-items:center;gap:40px;padding:40px
   text-wrap:pretty;
   text-shadow:0 1px 2px rgba(10,12,16,.30), 0 2px 22px rgba(10,12,16,.38);
 }
-.copy.dark{color:var(--ink);text-shadow:0 1px 2px rgba(255,255,255,.35), 0 2px 22px rgba(255,255,255,.45)}
+/* Tight halo, no bloom: a wide white glow around black letters is what makes
+   them read grey, however black the glyph itself is. */
+.copy.dark{color:var(--ink);text-shadow:0 1px 2px rgba(255,255,255,.5)}
 .copy em{font-style:italic}
 .copy .l2{display:block;margin-top:.85em;opacity:.92}
 
