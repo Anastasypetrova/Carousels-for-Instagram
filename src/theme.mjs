@@ -85,7 +85,7 @@ export function baseCss({ w, h }) {
   /* Dark type is pure black, not a soft grey. Grey reads as washed out on a
      photo — the frame already has plenty of mid tones for it to disappear
      into, and the white glow underneath is what keeps it legible. */
-  --ink:#000;
+  --ink:#000000;
   --font-grotesk:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;
 }
 html,body{background:#111;-webkit-font-smoothing:antialiased}
