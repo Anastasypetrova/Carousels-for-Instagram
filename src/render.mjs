@@ -27,7 +27,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SIZES, DEFAULT_SIZE, TEXT_SIZES, LINE_HEIGHT, SUPERSAMPLE, baseCss, rich, esc } from './theme.mjs';
+import { SIZES, DEFAULT_SIZE, textSize, LINE_HEIGHT, SUPERSAMPLE, baseCss, rich, esc } from './theme.mjs';
 import { findTextBox, measureBox, roundBox } from './analyze.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -57,7 +57,7 @@ function vignetteFor(measured) {
  * glyph, which is near enough to count lines from.
  */
 function textHeight(slide, boxW, size) {
-  const fs = (TEXT_SIZES[slide.size ?? 'm'] ?? TEXT_SIZES.m) * size.w;
+  const fs = textSize(slide.size) * size.w;
   const perLine = Math.max(8, (boxW * size.w) / (fs * 0.5));
   const chars = [slide.text, slide.text2].filter(Boolean).join(' ').length;
   const lines = Math.max(1, Math.ceil(chars / perLine)) + (slide.text2 ? 1 : 0);
@@ -216,7 +216,7 @@ async function prepPhoto(src, dest, { w, h }, { focus = 'centre', grade = 'base'
 function slideHtml(s, i, cfg) {
   const box = s._box;
   const tone = s._tone;                       // 'light' = white type, 'dark' = ink
-  const fs = TEXT_SIZES[s.size ?? 'm'] ?? TEXT_SIZES.m;
+  const fs = textSize(s.size);
   const vs = s.vignette ?? s._vs ?? 1;        // vignette strength, 0 turns it off
 
   const vars = [

@@ -35,8 +35,17 @@ export const DEFAULT_SIZE = '4:5';
  */
 export const SUPERSAMPLE = 2;
 
-/** Copy sizes, as a share of canvas width — measured off the reference slides. */
+/**
+ * Copy sizes, as a share of canvas width — measured off the reference slides.
+ * A spec may also give `size` as a number to set the fraction outright.
+ */
 export const TEXT_SIZES = { s: 0.021, m: 0.0245, l: 0.029 };
+
+/** Resolve a slide's `size`: a named step, or a raw fraction of canvas width. */
+export function textSize(size) {
+  if (typeof size === 'number') return size;
+  return TEXT_SIZES[size ?? 'm'] ?? TEXT_SIZES.m;
+}
 
 /**
  * Leading. Tight enough that a few lines read as a single block rather than a
