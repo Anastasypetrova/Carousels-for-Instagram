@@ -348,8 +348,10 @@ async function main() {
   const slug = cfg.slug ?? path.basename(args.spec, '.json');
   const outDir = path.resolve(ROOT, args.out, slug);
   const workDir = path.join(outDir, '_photos');
+  const previewDir = path.join(outDir, '_preview');
   await fs.rm(outDir, { recursive: true, force: true });
   await fs.mkdir(workDir, { recursive: true });
+  await fs.mkdir(previewDir, { recursive: true });
 
   const photos = await photoIndex();
 
@@ -413,6 +415,12 @@ async function main() {
       const raw = await el.screenshot({ type: 'png' });
       const name = `${items[i].name}.${ext}`;
       const img = sharp(raw).resize(size.w, size.h, { kernel: 'lanczos3' });
+      // A small JPEG alongside every slide. The agent has to look at each one
+      // before handing it over, and a 1440px lossless PNG is heavy to open —
+      // without these it ends up shelling out to shrink them itself, which
+      // means an unpredictable command and a permission prompt every time.
+      await sharp(raw).resize({ width: 720, kernel: 'lanczos3' })
+        .jpeg({ quality: 78 }).toFile(path.join(previewDir, `${items[i].name}.jpg`));
       // PNG by default: Instagram re-encodes to JPEG on its side, and going
       // through a JPEG of our own first would stack one generation of loss on
       // top of another.
@@ -434,7 +442,8 @@ async function main() {
         : 'без текста';
       console.log(`  ${String(i + 1).padStart(2, '0')}  ${where}`);
     }
-    console.log(`\n  превью: ${path.relative(ROOT, path.join(outDir, 'preview.html'))}\n`);
+    console.log(`\n  превью: ${path.relative(ROOT, path.join(outDir, 'preview.html'))}`);
+    console.log(`  мелкие копии для проверки: ${path.relative(ROOT, previewDir)}/\n`);
   } finally {
     await browser.close();
     server.close();
