@@ -137,16 +137,19 @@ async function photoIndex() {
 /**
  * Tone curves.
  *
- * `base` is the house treatment and the default: brightness down a couple of
- * points and a touch of sharpening. Both are deliberately small — the point is
- * a slightly deeper, crisper frame that still looks like the photo you took,
- * not a filter.
+ * `base` is the house treatment and the default. Depth comes from tone, not
+ * from sharpening: brightness down, a small contrast lift pivoted on mid grey
+ * so shadows sit deeper without the highlights blowing, and a touch more
+ * colour. Sharpening is almost off — enough to undo the softness of the
+ * downscale, not enough to see. Cranked sharpness is what makes a phone frame
+ * look processed, and it flattens it: every surface gets the same crunchy
+ * texture, so nothing reads as near or far.
  */
 const GRADES = {
-  base: { brightness: 0.96, sharpen: 0.8 },
+  base: { brightness: 0.94, saturation: 1.05, contrast: 1.07, sharpen: 0.35 },
   none: null,
-  soft: { brightness: 0.98, sharpen: 0.5 },
-  deep: { brightness: 0.93, saturation: 0.97, sharpen: 1.1 },
+  soft: { brightness: 0.97, saturation: 1.02, contrast: 1.03, sharpen: 0.25 },
+  deep: { brightness: 0.91, saturation: 1.08, contrast: 1.12, sharpen: 0.4 },
 };
 
 /**
@@ -200,12 +203,20 @@ async function prepPhoto(src, dest, { w, h }, { focus = 'centre', grade = 'base'
   const g = GRADES[grade];
   if (g === undefined) throw new Error(`unknown grade "${grade}" — use ${Object.keys(GRADES).join(', ')}`);
   if (g) {
-    const { sharpen, ...modulate } = g;
+    const { sharpen, contrast, ...modulate } = g;
+    // Contrast pivoted on mid grey: out = a·in + 128(1−a) leaves the midtones
+    // where they were and pulls the two ends apart, which is what reads as
+    // depth. Pivoting on black instead would just darken the whole frame.
+    if (contrast) img = img.linear(contrast, 128 * (1 - contrast));
     if (Object.keys(modulate).length) img = img.modulate(modulate);
     // Sharpening happens at render resolution but is judged at output size, so
     // the radius scales with the supersample — otherwise it halves on the way
     // down and the "couple of points" turns into none.
-    if (sharpen) img = img.sharpen({ sigma: sharpen * SUPERSAMPLE });
+    //
+    // m1:0 leaves flat areas alone entirely — sky, skin and walls keep their
+    // smoothness and only real edges get the pass. That is the difference
+    // between a frame that looks sharp and one that looks sharpened.
+    if (sharpen) img = img.sharpen({ sigma: sharpen * SUPERSAMPLE, m1: 0, m2: 1.4 });
   }
 
   await img.png({ compressionLevel: 6 }).toFile(dest);

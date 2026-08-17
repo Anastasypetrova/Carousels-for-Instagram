@@ -39,7 +39,7 @@ export const SUPERSAMPLE = 2;
  * Copy sizes, as a share of canvas width — measured off the reference slides.
  * A spec may also give `size` as a number to set the fraction outright.
  */
-export const TEXT_SIZES = { s: 0.021, m: 0.0245, l: 0.029 };
+export const TEXT_SIZES = { s: 0.0179, m: 0.0208, l: 0.0247 };
 
 /** Resolve a slide's `size`: a named step, or a raw fraction of canvas width. */
 export function textSize(size) {
@@ -82,7 +82,10 @@ export function baseCss({ w, h }) {
   return `
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --ink:#2C2C2C;
+  /* Dark type is pure black, not a soft grey. Grey reads as washed out on a
+     photo — the frame already has plenty of mid tones for it to disappear
+     into, and the white glow underneath is what keeps it legible. */
+  --ink:#000;
   --font-grotesk:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;
 }
 html,body{background:#111;-webkit-font-smoothing:antialiased}
@@ -106,9 +109,9 @@ body{display:flex;flex-direction:column;align-items:center;gap:40px;padding:40px
      of the house look, not a device for holding type. */
   background:
     radial-gradient(128% 96% at 50% 42%,
-      rgba(8,10,14,0) 52%,
-      rgba(8,10,14,.16) 82%,
-      rgba(8,10,14,.30) 100%);
+      rgba(8,10,14,0) 44%,
+      rgba(8,10,14,.28) 74%,
+      rgba(8,10,14,.54) 100%);
 }
 /* The pool under the copy sits on top of the falloff, sized to what the ground
    needs (--vs) and present only where there is copy (--vp).
@@ -122,9 +125,9 @@ body{display:flex;flex-direction:column;align-items:center;gap:40px;padding:40px
       rgba(8,10,14,calc(.03*var(--vs)*var(--vp))) 60%,
       rgba(8,10,14,0) 78%),
     radial-gradient(128% 96% at 50% 42%,
-      rgba(8,10,14,0) 52%,
-      rgba(8,10,14,.16) 82%,
-      rgba(8,10,14,.30) 100%);
+      rgba(8,10,14,0) 44%,
+      rgba(8,10,14,.28) 74%,
+      rgba(8,10,14,.54) 100%);
 }
 /* Light ground takes the same shape in reverse, so dark type keeps its footing. */
 .vig.pool.inverted{
@@ -134,8 +137,8 @@ body{display:flex;flex-direction:column;align-items:center;gap:40px;padding:40px
       rgba(255,255,255,calc(.13*var(--vs)*var(--vp))) 36%,
       rgba(255,255,255,0) 76%),
     radial-gradient(128% 96% at 50% 42%,
-      rgba(8,10,14,0) 55%,
-      rgba(8,10,14,.22) 100%);
+      rgba(8,10,14,0) 48%,
+      rgba(8,10,14,.38) 100%);
 }
 
 /* the copy */
@@ -160,11 +163,11 @@ body{display:flex;flex-direction:column;align-items:center;gap:40px;padding:40px
 /* optional handle, bottom-left, same restraint as the copy */
 .handle{
   position:absolute;z-index:3;left:calc(var(--pad) * ${w}px);bottom:calc(var(--pad) * ${w}px);
-  font-family:var(--font-grotesk);font-weight:400;font-size:calc(.021 * ${w}px);
+  font-family:var(--font-grotesk);font-weight:400;font-size:calc(.0179 * ${w}px);
   letter-spacing:.06em;color:rgba(255,255,255,.72);
   text-shadow:0 1px 14px rgba(10,12,16,.45);
 }
-.handle.dark{color:rgba(44,44,44,.62);text-shadow:0 1px 14px rgba(255,255,255,.5)}
+.handle.dark{color:rgba(0,0,0,.72);text-shadow:0 1px 14px rgba(255,255,255,.5)}
 
 /* debug overlay: the chosen box and the 1:1 grid crop, drawn only with --guides */
 .guides{position:absolute;inset:0;z-index:9;pointer-events:none;display:none}
