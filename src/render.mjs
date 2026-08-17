@@ -194,20 +194,50 @@ function decodeError(src, err) {
  * costs real detail twice over: once to the browser's own scaling, once to
  * JPEG artefacts that the second encode then bakes in.
  */
+/**
+ * A frame this close to the canvas ratio already is the canvas ratio — the
+ * gap is rounding, not a composition she needs cropped. `fit: 'cover'` would
+ * do the same thing in this case anyway (nothing to overflow, nothing to
+ * clip), but asking for 'fill' says so outright instead of relying on that
+ * coincidence, and skips the attention-detection pass that 'cover' runs to
+ * pick a crop position that will never be used.
+ */
+const ASPECT_TOLERANCE = 0.01;
+
 async function prepPhoto(src, dest, { w, h }, { focus = 'centre', grade = 'base', workDir }) {
   src = await ensureReadable(src, workDir ?? path.dirname(dest));
+
+  const meta = await sharp(src).metadata();
+  const turned = [5, 6, 7, 8].includes(meta.orientation);
+  const srcAspect = (turned ? meta.height : meta.width) / (turned ? meta.width : meta.height);
+  const alreadyCropped = Math.abs(srcAspect - w / h) < ASPECT_TOLERANCE;
+
   const position = focus === 'auto' ? sharp.strategy.attention : focus;
   const rw = w * SUPERSAMPLE, rh = h * SUPERSAMPLE;
-  let img = sharp(src).rotate().resize(rw, rh, { fit: 'cover', position, kernel: 'lanczos3' });
+  let img = sharp(src).rotate()
+    .resize(rw, rh, alreadyCropped ? { fit: 'fill' } : { fit: 'cover', position, kernel: 'lanczos3' });
 
   const g = GRADES[grade];
   if (g === undefined) throw new Error(`unknown grade "${grade}" — use ${Object.keys(GRADES).join(', ')}`);
   if (g) {
-    const { sharpen, contrast, ...modulate } = g;
+    const { sharpen, contrast, brightness, ...modulate } = g;
+
+    // Skip the darkening on a frame that's already dark: brightness -6% and a
+    // contrast lift that pivots shadows further from mid grey both push a
+    // night shot or a deep-shadow interior further toward black instead of
+    // adding depth it doesn't have room left to show. Measured post-crop,
+    // since that is the frame that is actually about to be graded — a bright
+    // sky trimmed off by the crop above shouldn't count. Colour and
+    // sharpening aren't darkening, so they still run.
+    const { channels } = await img.clone().stats();
+    const srcLum = (0.299 * channels[0].mean + 0.587 * channels[1].mean + 0.114 * channels[2].mean) / 255;
+    const alreadyDark = srcLum < 0.25;
+    modulate.brightness = alreadyDark ? 1 : brightness;
+
     // Contrast pivoted on mid grey: out = a·in + 128(1−a) leaves the midtones
     // where they were and pulls the two ends apart, which is what reads as
     // depth. Pivoting on black instead would just darken the whole frame.
-    if (contrast) img = img.linear(contrast, 128 * (1 - contrast));
+    if (contrast && !alreadyDark) img = img.linear(contrast, 128 * (1 - contrast));
     if (Object.keys(modulate).length) img = img.modulate(modulate);
     // Sharpening happens at render resolution but is judged at output size, so
     // the radius scales with the supersample — otherwise it halves on the way
