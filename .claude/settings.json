@@ -5,13 +5,36 @@
       "Read",
       "Glob",
       "Grep",
-      "Write(posts/**)",
-      "Edit(posts/**)",
+      "Write",
+      "Edit",
       "Bash(npm run render:*)",
       "Bash(npm run video:*)",
       "Bash(npm install)",
+      "Bash(npx playwright install:*)",
+      "Bash(git pull:*)",
+      "Bash(git fetch:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
       "Bash(ls:*)",
-      "Bash(open:*)"
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(open:*)",
+      "Bash(sips:*)",
+      "Bash(file:*)",
+      "Bash(du:*)",
+      "Bash(find:*)",
+      "Bash(node:*)"
+    ],
+    "deny": [
+      "Bash(sudo:*)",
+      "Bash(git push --force:*)"
     ]
   }
 }

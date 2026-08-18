@@ -8,3 +8,6 @@ out
 
 # macOS junk
 .DS_Store
+
+# personal permission choices stay on your machine
+.claude/settings.local.json
