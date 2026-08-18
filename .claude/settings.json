@@ -1,6 +1,6 @@
 {
   "permissions": {
-    "defaultMode": "auto",
+    "defaultMode": "acceptEdits",
     "allow": [
       "Read",
       "Glob",
@@ -16,21 +16,25 @@
       "Bash(git status:*)",
       "Bash(git log:*)",
       "Bash(git diff:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
       "Bash(ls:*)",
       "Bash(cat:*)",
       "Bash(head:*)",
+      "Bash(tail:*)",
       "Bash(mkdir:*)",
       "Bash(cp:*)",
       "Bash(mv:*)",
       "Bash(open:*)",
       "Bash(sips:*)",
       "Bash(file:*)",
-      "Bash(du:*)"
+      "Bash(du:*)",
+      "Bash(find:*)",
+      "Bash(node:*)"
     ],
     "deny": [
-      "Bash(rm -rf /:*)",
-      "Bash(git push --force:*)",
-      "Bash(sudo:*)"
+      "Bash(sudo:*)",
+      "Bash(git push --force:*)"
     ]
   }
 }
