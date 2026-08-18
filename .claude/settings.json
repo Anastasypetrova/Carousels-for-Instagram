@@ -1,17 +1,36 @@
 {
   "permissions": {
-    "defaultMode": "acceptEdits",
+    "defaultMode": "auto",
     "allow": [
       "Read",
       "Glob",
       "Grep",
-      "Write(posts/**)",
-      "Edit(posts/**)",
+      "Write",
+      "Edit",
       "Bash(npm run render:*)",
       "Bash(npm run video:*)",
       "Bash(npm install)",
+      "Bash(npx playwright install:*)",
+      "Bash(git pull:*)",
+      "Bash(git fetch:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
       "Bash(ls:*)",
-      "Bash(open:*)"
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(open:*)",
+      "Bash(sips:*)",
+      "Bash(file:*)",
+      "Bash(du:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /:*)",
+      "Bash(git push --force:*)",
+      "Bash(sudo:*)"
     ]
   }
 }
