@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 {
   "permissions": {
     "defaultMode": "acceptEdits",
@@ -38,3 +39,6 @@
     ]
   }
 }
+=======
+{"permissions":{"allow":["Bash(npm *)","Bash(npx *)","Bash(node *)","Bash(python3 *)","Bash(ffmpeg *)","Bash(ffprobe *)","Bash(git *)","Read"],"deny":["Bash(sudo )","Bash(rm -rf /)"],"defaultMode":"acceptEdits"}}
+>>>>>>> Stashed changes
