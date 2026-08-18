@@ -139,11 +139,16 @@ async function main() {
   }
 
   const src = path.resolve(ROOT, args.src);
-  const slug = path.basename(src).replace(/\.[^.]+$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  const outDir = path.resolve(ROOT, args.out, slug);
+  const base = path.basename(src).replace(/\.[^.]+$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const outDir = path.resolve(ROOT, args.out);
   await fs.mkdir(outDir, { recursive: true });
 
-  const dest = path.join(outDir, `${args.kind}.mp4`);
+  // No per-clip subfolder: a video is a slide like any other, and it belongs
+  // next to the numbered photos in the same post's out/ directory, not
+  // tucked away where it won't get noticed. The source name is folded into
+  // the filename instead, since that's what would otherwise have named the
+  // subfolder — still collision-safe with nothing extra to look inside.
+  const dest = path.join(outDir, `${base}-${args.kind}.mp4`);
   const r = await prepVideo(src, dest, args);
 
   const target = KINDS[args.kind];
